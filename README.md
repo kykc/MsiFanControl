@@ -10,9 +10,25 @@ hacking should be enough to port this thing to Linux.
 
 # Building
 
-``TODO``
+Can be built out-of-the-box by ``Visual Studio 2015``, solution/project files can be rather easily upgraded/downgraded to desired
+version of studio/msvc compiler as no ultra-modern cutting edge MS technologies are used.
+
+You'll need those files from ``MsiFanControl\bin\Release`` ir ``MsiFanControl\bin\Debug``:
+```
+CLAP.dll
+MsiFanControl.exe
+MsiFanControl.exe.config
+MsiWmiAcpiMof.dll
+MsiWmiAcpiMof.reg
+```
 
 # Using
+
+## First use
+
+``TODO``
+
+## Using advanced profiles
 
 ``TODO``
 
