@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Util.cs" />
     <Compile Include="Validation.cs" />
     <Compile Include="Modes\FanAdvancedControlMode.cs" />
     <Compile Include="Program.cs" />

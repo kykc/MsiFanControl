@@ -28,6 +28,18 @@ namespace MsiFanControl
             Console.WriteLine(help);
         }
 
+        public static bool InstallationNeeded()
+        {
+            if (!Util.isInstalled())
+            {
+                Console.WriteLine("It seems that MOF data is not installed in system, you should run \"msifancontrol install\" first");
+
+                return true;
+            }
+
+            return false;
+        }
+
         [Verb]
         public static void Advanced(
             [Aliases("t")]
@@ -41,6 +53,11 @@ namespace MsiFanControl
             [AdvancedModeValuesValidation]
             int[] values)
         {
+            if (InstallationNeeded())
+            {
+                return;
+            }
+
             int v0 = values[0];
             int v1 = values[1];
             int v2 = values[2];
