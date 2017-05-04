@@ -1,0 +1,80 @@
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set Software"), guid("{24418D6A-0A79-524C-9AB1-18B78CA68CE7}")]
+class MSI_Software
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("Software")] uint8 Software;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set Device"), guid("{4AFBD56B-9F91-8f49-81F5-995BA73822AF}")]
+class MSI_Device
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("Device")] uint8 Device;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set Power"), guid("{2D3CBA6C-1C9C-7f41-B54C-F5D5D580D482}")]
+class MSI_Power
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("Power")] uint8 Power;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set Master_Battery"), guid("{40BA026D-075D-cd4a-9710-F7C57347CAC9}")]
+class MSI_Master_Battery
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("Master_Battery")] sint16 Master_Battery;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set Slave_Battery"), guid("{8DBCCF6E-9DB4-0e46-A3F2-99AFAAA77A7A}")]
+class MSI_Slave_Battery
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("Slave_Battery")] sint16 Slave_Battery;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set CPU"), guid("{BD2A216F-2FB9-a640-B807-DDDBAD656891}")]
+class MSI_CPU
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("CPU")] uint8 CPU;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set VGA"), guid("{1EC3EC7A-1E9B-e74a-9026-CF122B0BBD21}")]
+class MSI_VGA
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("VGA")] uint8 VGA;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set System"), guid("{A1753D7B-B621-de4a-B41A-55716A0ECE7A}")]
+class MSI_System
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("System")] uint8 System;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Locale("MS\\0x409"), Description("Class to ECRam Query/Set AP"), guid("{A1753D7C-B621-de4a-B41A-55716A0ECE7A}")]
+class MSI_AP
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("AP")] uint8 AP;
+};
+
+[WMI, dynamic: ToInstance, provider("WmiProv"), Local("MS\\0x409"), Description("Event defined by MSI"), guid("{5B3CC38A-40D9-7245-8AE6-1145B751BE3F}")]
+class MSI_Event : WMIEvent
+{
+	[key, read] string InstanceName;
+	[read] boolean Active;
+	[WmiDataId(1), read, write, Description("Event defined by MSI")] uint32 MSIEvt;
+};
