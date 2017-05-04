@@ -23,6 +23,7 @@ namespace MsiFanControl.Modes
             {
                 managementObjectSearcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_CPU");
             }
+
             try
             {
                 //int arg_3F_0 = (100 + this.fanCPU_Value) / 100;

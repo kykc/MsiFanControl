@@ -53,5 +53,18 @@ namespace MsiFanControl
 
             Console.WriteLine("done");
         }
+
+        [Verb]
+        public static void Install(
+            [DefaultValue(false)]
+            [Aliases("y")]
+            bool yes)
+        {
+            // TODO: installation routine:
+            // 0. Convirmation text and prompt if no --yes flag
+            // 1. Copy compiled MOF definitions to SysWOW64
+            // 2. Add MsiWmiAcpiMof.reg to registry
+            // 3. Output text of success/failure and advice to restart PC
+        }
     }
 }
