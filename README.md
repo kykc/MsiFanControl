@@ -26,7 +26,10 @@ MsiWmiAcpiMof.reg
 
 ## First use
 
-``TODO``
+Run ``msifancontrol install`` and follow instructions. This is needed only once, and changes are system-wide 
+(meaning it's not necessary to do this for each user profile, just once will be enough)
+
+_Pro tip:_ use ``msifancontrol install /y`` for Chuck Norris mode (no questions asked)
 
 ## Using advanced profiles
 
