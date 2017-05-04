@@ -36,7 +36,8 @@ _Pro tip:_ use ``msifancontrol install /y`` for Chuck Norris mode (no questions 
 There are two parameters (both mandatory) to set up advanced profile:
 1. Fan type: ``cpu`` or ``gpu``, pretty self-explanatory
 2. Values: this is array of six fan rotation speeds in percent in range 0-150 (don't ask me why, it's MSI design).
-   Exact temperatures at which next tier kicks in are unknown, and possible are hardware model dependent.
+   Exact temperatures at which next tier kicks in are unknown, and possible are hardware model dependent. What is known,
+   is that they're go from most cool to most hot.
 
 _Examples:_
 
