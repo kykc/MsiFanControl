@@ -7,84 +7,172 @@ using System.Threading.Tasks;
 
 namespace MsiFanControl.Modes
 {
-	class FanAdvancedControlMode
+	class AdvancedModeValue
 	{
-		public static void applyProfile(bool isCPU, int value0, int value1, int value2, int value3, int value4, int value5)
-		{
-			int num = 0;
-			string propertyName = "CPU";
-			ManagementObjectSearcher managementObjectSearcher;
-			if (!isCPU)
-			{
-				propertyName = "VGA";
-				managementObjectSearcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_VGA");
-			}
-			else
-			{
-				managementObjectSearcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_CPU");
-			}
+		public uint Value { get; set; }
+		public uint Index { get; set; }
+		public string InstanceName { get; set; }
+		public bool IsActive { get; set; }
 
+		public bool IsValid()
+		{
 			try
 			{
-				using (var enumerator = managementObjectSearcher.Get().GetEnumerator())
-				{
-					while (enumerator.MoveNext())
-					{
-						ManagementObject managementObject = (ManagementObject)enumerator.Current;
-						switch (num)
-						{
-							case 11:
-								managementObject.SetPropertyValue(propertyName, value0);
-								managementObject.Put();
-								break;
-							case 12:
-								managementObject.SetPropertyValue(propertyName, value1);
-								managementObject.Put();
-								break;
-							case 13:
-								managementObject.SetPropertyValue(propertyName, value2);
-								managementObject.Put();
-								break;
-							case 14:
-								managementObject.SetPropertyValue(propertyName, value3);
-								managementObject.Put();
-								break;
-							case 15:
-								managementObject.SetPropertyValue(propertyName, value4);
-								managementObject.Put();
-								break;
-							case 16:
-								managementObject.SetPropertyValue(propertyName, value5);
-								managementObject.Put();
-								break;
-						}
-						num++;
-					}
-				}
-				num = 0;
-				var managementObjectSearcher2 = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_System");
-				using (var enumerator2 = managementObjectSearcher2.Get().GetEnumerator())
-				{
-					while (enumerator2.MoveNext())
-					{
-						ManagementObject managementObject2 = (ManagementObject)enumerator2.Current;
-						if (num == 9)
-						{
-							int num2;
-							int.TryParse(managementObject2["System"].ToString(), out num2);
-							num2 |= 128;
-							num2 &= 191;
-							managementObject2.SetPropertyValue("System", num2);
-							managementObject2.Put();
-							break;
-						}
-						num++;
-					}
-				}
+				return int.Parse(InstanceName.Split('_').Last()) == Index && Value <= 150;
 			}
 			catch (Exception)
 			{
+				return false;
 			}
+		}
+
+		public static AdvancedModeValue FromWmi(uint index, string propertyName, ManagementObject obj)
+		{
+			return new AdvancedModeValue
+			{
+				Index = index,
+				Value = Convert.ToUInt32(obj.GetPropertyValue(propertyName)),
+				InstanceName = Convert.ToString(obj.GetPropertyValue(AdvancedModeModel.NAME_KEY)),
+				IsActive = Convert.ToBoolean(obj.GetPropertyValue(AdvancedModeModel.ACTIVE_KEY))
+			};
+		}
+	}
+
+	class AdvancedModeInvalidException : Exception
+	{
+		public AdvancedModeInvalidException() : base() { }
+		public AdvancedModeInvalidException(string msg) : base(msg) { }
+	}
+
+	class AdvancedModeModel
+	{
+		private readonly string _propertyName;
+		private readonly string _tableName;
+		private readonly List<uint> _indexWhiteList = new List<uint> { 11, 12, 13, 14, 15, 16 };
+		private readonly FanType _fanType;
+		private ManagementObjectSearcher _searcher;
+		private List<AdvancedModeValue> _instances;
+
+		public const string NAME_KEY = "InstanceName";
+		public const string ACTIVE_KEY = "Active";
+
+		private void RefreshFromDb()
+		{
+			_instances = new List<AdvancedModeValue>();
+
+			Util.WmiQueryForeach(
+				_searcher,
+				(obj, index) => AdvancedModeValue.FromWmi(index, _propertyName, obj),
+				(obj, model) => _instances.Add(model));
+
+			_instances = _instances.Where((x) => _indexWhiteList.Contains(x.Index)).ToList();
+
+			if (!IsValid())
+			{
+				throw new AdvancedModeInvalidException();
+			}
+		}
+
+		public AdvancedModeModel(FanType type)
+		{
+			_propertyName = type == FanType.cpu ? "CPU" : "VGA";
+			_tableName = type == FanType.cpu ? "MSI_CPU" : "MSI_VGA";
+			_fanType = type;
+
+			_searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM " + _tableName);
+
+			RefreshFromDb();	
+		}
+
+		public bool IsValid()
+		{
+			return _instances.All((x) => x.IsValid()) && _instances.Count == _indexWhiteList.Count;
+		}
+
+		public void Commit()
+		{
+			if (!IsValid())
+			{
+				throw new AdvancedModeInvalidException();
+			}
+
+			Util.WmiQueryForeach(
+				_searcher,
+				(obj, index) => AdvancedModeValue.FromWmi(index, _propertyName, obj),
+				(obj, model) =>
+				{
+					if (_indexWhiteList.Contains(model.Index))
+					{
+						int value = (int)_instances.Where((x) => x.Index == model.Index).First().Value;
+						obj.SetPropertyValue(_propertyName, value);
+						obj.Put();
+					}
+				}
+			);
+
+			RefreshFromDb();
+		}
+
+		public IEnumerable<AdvancedModeValue> Enumerate()
+		{
+			if (!IsValid())
+			{
+				throw new AdvancedModeInvalidException();
+			}
+
+			return _instances.AsEnumerable();
+		}
+
+		public AdvancedModeValue this[uint i]
+		{
+			get
+			{
+				if (!IsValid())
+				{
+					throw new AdvancedModeInvalidException();
+				}
+				else if (i > 6)
+				{
+					throw new IndexOutOfRangeException(i.ToString());
+				}
+				else
+				{
+					return _instances[(int)i];
+				}
+			}
+		}
+	}
+
+	class FanAdvancedControlMode
+	{
+		public static void applyProfile(FanType type, int[] values)
+		{
+			// Writing values to advanced profile
+			AdvancedModeModel model = new AdvancedModeModel(type);
+
+			foreach (var item in model.Enumerate().Select((value, i) => new { i, value }))
+			{
+				item.value.Value = (uint)values[item.i];
+			}
+
+			model.Commit();
+
+			// Switching mode to advanced
+			var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_System");
+			const string propName = "System";
+
+			Util.WmiQueryForeach(searcher, (obj, index) => AdvancedModeValue.FromWmi(index, propName, obj), (obj, instance) =>
+			{
+				// TODO: also check instance name for index sanity
+				if (instance.Index == 9)
+				{
+					int value = Convert.ToInt32(obj.GetPropertyValue(propName));
+					value |= 128;
+					value &= 191;
+					obj.SetPropertyValue(propName, value);
+					obj.Put();
+				}
+			});
 		}
 	}
 }

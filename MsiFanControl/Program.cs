@@ -58,17 +58,8 @@ namespace MsiFanControl
 			{
 				return;
 			}
-
-			int v0 = values[0];
-			int v1 = values[1];
-			int v2 = values[2];
-			int v3 = values[3];
-			int v4 = values[4];
-			int v5 = values[5];
-
-			bool isCpu = type == FanType.cpu;
-
-			Modes.FanAdvancedControlMode.applyProfile(isCpu, v0, v1, v2, v3, v4, v5);
+			
+			Modes.FanAdvancedControlMode.applyProfile(type, values);
 
 			Console.WriteLine("done");
 		}
