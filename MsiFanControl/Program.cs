@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CLAP;
+using System.Diagnostics;
 
 namespace MsiFanControl
 {
@@ -60,11 +61,44 @@ namespace MsiFanControl
             [Aliases("y")]
             bool yes)
         {
-            // TODO: installation routine:
-            // 0. Convirmation text and prompt if no --yes flag
-            // 1. Copy compiled MOF definitions to SysWOW64
-            // 2. Add MsiWmiAcpiMof.reg to registry
-            // 3. Output text of success/failure and advice to restart PC
+            if (!yes)
+            {
+                Console.Write("Are you sure to install MSI MOF information for WmiAcpi driver? (y/n) ");
+                var keyInfo = Console.ReadKey(false);
+                yes = keyInfo.KeyChar == 'y' || keyInfo.KeyChar == 'Y';
+                Console.WriteLine("");
+            }
+
+            if (yes)
+            {
+                string syswow64 = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
+                string filename = "MsiWmiAcpiMof.dll";
+                string regname = "MsiWmiAcpiMof.reg";
+                string myLocation = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+
+                Console.WriteLine("Copying MOF definition file...");
+                System.IO.File.Copy(myLocation + System.IO.Path.DirectorySeparatorChar + filename, syswow64 + System.IO.Path.DirectorySeparatorChar + filename, true);
+
+                Action<string> runHidden = (string cmd) =>
+                {
+                    Process proc = new Process();
+                    proc.StartInfo.FileName = "CMD.exe";
+                    proc.StartInfo.Arguments = "/c " + cmd;
+                    proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    proc.Start();
+                    proc.WaitForExit();
+                };
+
+                Console.WriteLine("Importing registry changes for WmiAcpi driver...");
+                runHidden("reg.exe import \"" + myLocation + System.IO.Path.DirectorySeparatorChar + regname + "\"");
+
+                Console.WriteLine("Installation completed: success");
+                Console.WriteLine("NOTE: It is necessary to restart your PC before you can control fan speeds");
+            }
+            else
+            {
+                Console.WriteLine("Installation canceled by user");
+            }
         }
     }
 }
