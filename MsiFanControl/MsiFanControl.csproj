@@ -51,6 +51,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Modes\FanBasicControlMode.cs" />
+    <Compile Include="Modes\ModeChanger.cs" />
+    <Compile Include="Modes\MsiWmiInstance.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Validation.cs" />
     <Compile Include="Modes\FanAdvancedControlMode.cs" />

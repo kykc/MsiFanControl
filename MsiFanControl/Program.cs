@@ -21,11 +21,11 @@ namespace MsiFanControl
 		[Empty, Help]
 		public static void Help(string help)
 		{
-			help = "For now only advanced mode is implemented, example:\n" + 
-				"\tmsifancontrol advanced -t:cpu -v:20,30,40,50,60,70\n" + 
-				help;
-
 			Console.WriteLine(help);
+			Console.WriteLine("   Examples: ");
+			Console.WriteLine("\tmsifancontrol auto");
+			Console.WriteLine("\tmsifancontrol basic /value:-10");
+			Console.WriteLine("\tmsifancontrol advanced /cpu:20,45,55,65,70,75 /gpu:0,20,40,60,80,80");
 		}
 
 		public static bool InstallationNeeded()
@@ -41,30 +41,75 @@ namespace MsiFanControl
 			return false;
 		}
 
-		[Verb]
-		public static void Advanced(
-			[Aliases("t")]
-			[Description("")]
-			[Required]
-			FanType type,
-
-			[Aliases("v")]
-			[Description("")]
-			[Required]
-			[AdvancedModeValuesValidation]
-			int[] values)
+		[Verb(Description = "Default behaviour of fans. In this profile they will work as if no custom control software were ever used")]
+		public static void Auto()
 		{
 			if (InstallationNeeded())
 			{
 				return;
 			}
-			
-			Modes.FanAdvancedControlMode.applyProfile(type, values);
 
-			Console.WriteLine("done");
+			Console.WriteLine("Changing mode to auto");
+			Modes.ModeChanger.ChangeMode(ControlMode.auto);
+
+			Console.WriteLine("All done");
 		}
 
-		[Verb]
+		[Verb(Description = "Basic control mode allows to adjust overall speed of fans with one \"offset\" value")]
+		public static void Basic(
+			[Aliases("")]
+			[Description("Control value for basic fan speed adjustment, allegedly affects both CPU and GPU fans")]
+			[Required]
+			[BasicModeValueValidation]
+			int value
+			)
+		{
+			if (InstallationNeeded())
+			{
+				return;
+			}
+
+			Console.WriteLine("Changing mode to basic");
+			Modes.ModeChanger.ChangeMode(ControlMode.basic);
+			Console.WriteLine("Setting basic profile control value");
+			Modes.FanBasicControlMode.applyProfile(value);
+			Console.WriteLine("All done");
+		}
+
+		[Verb(Description = "Advanced control mode allows to adjust the curve which represents fan speed function of temperature. " +
+			"Exact temperatures at which next tier kicks in are unknown, those tiers are possibly hardware model dependent. " + 
+			"What is known, is that they go from most cool to most hot.")]
+		public static void Advanced(
+			[Aliases("")]
+			[Description("")]
+			[Required]
+			[AdvancedModeValuesValidation]
+			int[] cpu,
+
+			[Aliases("")]
+			[Description("")]
+			[Required]
+			[AdvancedModeValuesValidation]
+			int[] gpu
+			)
+		{
+			if (InstallationNeeded())
+			{
+				return;
+			}
+
+			Console.WriteLine("Setting CPU fan values");
+			Modes.FanAdvancedControlMode.applyProfile(FanType.cpu, cpu);
+			Console.WriteLine("Setting GPU fan values");
+			Modes.FanAdvancedControlMode.applyProfile(FanType.gpu, gpu);
+			Console.WriteLine("Changing mode to advanced");
+			Modes.ModeChanger.ChangeMode(ControlMode.advanced);
+
+			Console.WriteLine("All done");
+		}
+
+		[Verb(Description = "Sadly, this utility needs to perform some minor changes in the system in order for it to work. " +
+			"This is needed only once, and changes are system-wide (meaning it's not necessary to do this for each user profile, just once will be enough")]
 		public static void Install(
 			[DefaultValue(false)]
 			[Aliases("y")]

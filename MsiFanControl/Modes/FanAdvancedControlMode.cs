@@ -7,37 +7,6 @@ using System.Threading.Tasks;
 
 namespace MsiFanControl.Modes
 {
-	class AdvancedModeValue
-	{
-		public uint Value { get; set; }
-		public uint Index { get; set; }
-		public string InstanceName { get; set; }
-		public bool IsActive { get; set; }
-
-		public bool IsValid()
-		{
-			try
-			{
-				return int.Parse(InstanceName.Split('_').Last()) == Index && Value <= 150;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
-
-		public static AdvancedModeValue FromWmi(uint index, string propertyName, ManagementObject obj)
-		{
-			return new AdvancedModeValue
-			{
-				Index = index,
-				Value = Convert.ToUInt32(obj.GetPropertyValue(propertyName)),
-				InstanceName = Convert.ToString(obj.GetPropertyValue(AdvancedModeModel.NAME_KEY)),
-				IsActive = Convert.ToBoolean(obj.GetPropertyValue(AdvancedModeModel.ACTIVE_KEY))
-			};
-		}
-	}
-
 	class AdvancedModeInvalidException : Exception
 	{
 		public AdvancedModeInvalidException() : base() { }
@@ -51,18 +20,18 @@ namespace MsiFanControl.Modes
 		private readonly List<uint> _indexWhiteList = new List<uint> { 11, 12, 13, 14, 15, 16 };
 		private readonly FanType _fanType;
 		private ManagementObjectSearcher _searcher;
-		private List<AdvancedModeValue> _instances;
+		private List<MsiWmiInstance> _instances;
 
 		public const string NAME_KEY = "InstanceName";
 		public const string ACTIVE_KEY = "Active";
 
 		private void RefreshFromDb()
 		{
-			_instances = new List<AdvancedModeValue>();
+			_instances = new List<MsiWmiInstance>();
 
 			Util.WmiQueryForeach(
 				_searcher,
-				(obj, index) => AdvancedModeValue.FromWmi(index, _propertyName, obj),
+				(obj, index) => MsiWmiInstance.FromWmi(index, _propertyName, obj, (x) => x <= 150),
 				(obj, model) => _instances.Add(model));
 
 			_instances = _instances.Where((x) => _indexWhiteList.Contains(x.Index)).ToList();
@@ -98,7 +67,7 @@ namespace MsiFanControl.Modes
 
 			Util.WmiQueryForeach(
 				_searcher,
-				(obj, index) => AdvancedModeValue.FromWmi(index, _propertyName, obj),
+				(obj, index) => MsiWmiInstance.FromWmi(index, _propertyName, obj, (x) => x <= 150),
 				(obj, model) =>
 				{
 					if (_indexWhiteList.Contains(model.Index))
@@ -113,7 +82,7 @@ namespace MsiFanControl.Modes
 			RefreshFromDb();
 		}
 
-		public IEnumerable<AdvancedModeValue> Enumerate()
+		public IEnumerable<MsiWmiInstance> Enumerate()
 		{
 			if (!IsValid())
 			{
@@ -123,7 +92,7 @@ namespace MsiFanControl.Modes
 			return _instances.AsEnumerable();
 		}
 
-		public AdvancedModeValue this[uint i]
+		public MsiWmiInstance this[uint i]
 		{
 			get
 			{
@@ -147,7 +116,6 @@ namespace MsiFanControl.Modes
 	{
 		public static void applyProfile(FanType type, int[] values)
 		{
-			// Writing values to advanced profile
 			AdvancedModeModel model = new AdvancedModeModel(type);
 
 			foreach (var item in model.Enumerate().Select((value, i) => new { i, value }))
@@ -156,23 +124,6 @@ namespace MsiFanControl.Modes
 			}
 
 			model.Commit();
-
-			// Switching mode to advanced
-			var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_System");
-			const string propName = "System";
-
-			Util.WmiQueryForeach(searcher, (obj, index) => AdvancedModeValue.FromWmi(index, propName, obj), (obj, instance) =>
-			{
-				// TODO: also check instance name for index sanity
-				if (instance.Index == 9)
-				{
-					int value = Convert.ToInt32(obj.GetPropertyValue(propName));
-					value |= 128;
-					value &= 191;
-					obj.SetPropertyValue(propName, value);
-					obj.Put();
-				}
-			});
 		}
 	}
 }
