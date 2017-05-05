@@ -51,6 +51,7 @@ _Examples:_
 msifancontrol advanced /cpu:20,45,55,65,70,75 /gpu:0,20,40,60,80,80
 msifancontrol basic /value:-15
 msifancontrol auto
+msifancontrol status
 ```
 
 # How it works?
