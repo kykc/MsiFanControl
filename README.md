@@ -24,6 +24,11 @@ MsiWmiAcpiMof.reg
 
 # Using
 
+## Important note
+
+At least on my laptop reaction to the control value changes is not immediate, transition
+to new RPMs is smooth and takes some time.
+
 ## First use
 
 Run ``msifancontrol install`` and follow instructions. This is needed only once, and changes are system-wide 
@@ -34,7 +39,7 @@ _Pro tip:_ use ``msifancontrol install /y`` for Chuck Norris mode (no questions 
 ## Using different profiles
 
 1. _Auto_: Default behaviour of fans. In this profile they will work as if no custom control software were ever used.
-   I'm not a big fan of this mode. Get it? This is funny, right? Aaw, my sense of humor is even worse than my tech skills.
+   I'm not a big fan of this mode. Get it? This is funny, right?? Aaw, my sense of humor is even worse than my tech skills.
 2. _Basic_: Basic control mode allows to adjust overall speed of fans with one "offset" value in [-15;15] range
 3. _Advanced_: Advanced control mode allows to adjust the curve which represents fan speed function of temperature. 
    Exact temperatures at which next tier kicks in are unknown, those tiers are possibly hardware model dependent.
