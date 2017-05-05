@@ -24,6 +24,11 @@ MsiWmiAcpiMof.reg
 
 # Using
 
+## Prerequisites
+
+* [Microsoft Visual C++ Redistributable 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145)
+* [Microsoft .NET 4.5](https://www.microsoft.com/en-us/download/details.aspx?id=30653)
+
 ## Important note
 
 At least on my laptop reaction to the control value changes is not immediate, transition
