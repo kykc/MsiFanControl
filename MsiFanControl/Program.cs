@@ -81,6 +81,7 @@ namespace MsiFanControl
 			Modes.ModeChanger.ChangeMode(ControlMode.auto);
 
 			Console.WriteLine("All done");
+			Status();
 		}
 
 		[Verb(Description = "Basic control mode allows to adjust overall speed of fans with one \"offset\" value")]
