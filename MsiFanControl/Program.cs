@@ -12,12 +12,21 @@ namespace MsiFanControl
 	{
 		static void Main(string[] args)
 		{
-			Parser.RunConsole<FanControlVerbs>(args);
+			int exitCode = Parser.RunConsole<FanControlVerbs>(args);
+			Environment.Exit(exitCode);
 		}
 	}
 
 	class FanControlVerbs
 	{
+		public static void OutputLine(string line, bool quiet)
+		{
+			if (!quiet)
+			{
+				Console.WriteLine(line);
+			}
+		}
+
 		[Empty, Help]
 		public static void Help(string help)
 		{
@@ -28,12 +37,12 @@ namespace MsiFanControl
 			Console.WriteLine("\tmsifancontrol advanced /cpu:20,45,55,65,70,75 /gpu:0,20,40,60,80,80");
 		}
 
-		public static bool InstallationNeeded()
+		public static bool InstallationNeeded(bool quiet)
 		{
 			if (!Util.isInstalled())
 			{
-				Console.WriteLine("It seems that MOF data is not installed in system, " +
-					"you should run \"msifancontrol install\" first");
+				OutputLine("It seems that MOF data is not installed in system, " +
+					"you should run \"msifancontrol install\" first", quiet);
 
 				return true;
 			}
@@ -42,46 +51,51 @@ namespace MsiFanControl
 		}
 
 		[Verb(Description = "Gets info about currently active control profile and its properties (if any)")]
-		public static void Status()
+		public static void Status(bool quiet)
 		{
-			if (InstallationNeeded())
+			if (InstallationNeeded(quiet))
 			{
 				return;
 			}
 
 			var mode = Modes.ModeChanger.GetCurrentMode();
 
-			Console.WriteLine("Current control mode: " + mode.ToString());
+			OutputLine("Current control mode: " + mode.ToString(), quiet);
 
 			if (mode == ControlMode.advanced)
 			{
 				var cpu = new Modes.AdvancedModeModel(FanType.cpu);
 				var gpu = new Modes.AdvancedModeModel(FanType.gpu);
 
-				Console.WriteLine(cpu.ToString());
-				Console.WriteLine(gpu.ToString());
+				OutputLine(cpu.ToString(), quiet);
+				OutputLine(gpu.ToString(), quiet);
 			}
 			else if (mode == ControlMode.basic)
 			{
 				var model = new Modes.BasicModeModel();
 
-				Console.WriteLine(model.ToString());
+				OutputLine(model.ToString(), quiet);
 			}
 		}
 
 		[Verb(Description = "Default behaviour of fans. In this profile they will work as if no custom control software were ever used")]
-		public static void Auto()
+		public static void Auto(
+			[Aliases("")]
+			[Description("Quiet mode, not stdout output")]
+			[DefaultValue(false)]
+			bool quiet
+			)
 		{
-			if (InstallationNeeded())
+			if (InstallationNeeded(quiet))
 			{
 				return;
 			}
 
-			Console.WriteLine("Changing mode to auto");
+			OutputLine("Changing mode to auto", quiet);
 			Modes.ModeChanger.ChangeMode(ControlMode.auto);
 
-			Console.WriteLine("All done");
-			Status();
+			OutputLine("All done", quiet);
+			Status(quiet);
 		}
 
 		[Verb(Description = "Basic control mode allows to adjust overall speed of fans with one \"offset\" value")]
@@ -89,25 +103,30 @@ namespace MsiFanControl
 			[Aliases("")]
 			[Description("Control value for basic fan speed adjustment, allegedly affects both CPU and GPU fans")]
 			[BasicModeValueValidation]
-			int? value
+			int? value,
+
+			[Aliases("")]
+			[Description("Quiet mode, not stdout output")]
+			[DefaultValue(false)]
+			bool quiet
 			)
 		{
-			if (InstallationNeeded())
+			if (InstallationNeeded(quiet))
 			{
 				return;
 			}
 
 			if (value.HasValue)
 			{
-				Console.WriteLine("Setting basic profile control value");
+				OutputLine("Setting basic profile control value", quiet);
 				Modes.FanBasicControlMode.applyProfile(value.Value);
 			}
 
-			Console.WriteLine("Changing mode to basic");
+			OutputLine("Changing mode to basic", quiet);
 			Modes.ModeChanger.ChangeMode(ControlMode.basic);
 
-			Console.WriteLine("All done");
-			Status();
+			OutputLine("All done", quiet);
+			Status(quiet);
 		}
 
 		[Verb(Description = "Advanced control mode allows to adjust the curve which represents fan speed function of temperature. " +
@@ -122,31 +141,36 @@ namespace MsiFanControl
 			[Aliases("")]
 			[Description("")]
 			[AdvancedModeValuesValidation]
-			int[] gpu
+			int[] gpu,
+
+			[Aliases("")]
+			[Description("Quiet mode, not stdout output")]
+			[DefaultValue(false)]
+			bool quiet
 			)
 		{
-			if (InstallationNeeded())
+			if (InstallationNeeded(quiet))
 			{
 				return;
 			}
-
+			
 			if (cpu != null)
 			{
-				Console.WriteLine("Setting CPU fan values");
+				OutputLine("Setting CPU fan values", quiet);
 				Modes.FanAdvancedControlMode.applyProfile(FanType.cpu, cpu);
 			}
 
 			if (gpu != null)
 			{
-				Console.WriteLine("Setting GPU fan values");
+				OutputLine("Setting GPU fan values", quiet);
 				Modes.FanAdvancedControlMode.applyProfile(FanType.gpu, gpu);
 			}
 
-			Console.WriteLine("Changing mode to advanced");
+			OutputLine("Changing mode to advanced", quiet);
 			Modes.ModeChanger.ChangeMode(ControlMode.advanced);
 
-			Console.WriteLine("All done");
-			Status();
+			OutputLine("All done", quiet);
+			Status(quiet);
 		}
 
 		[Verb(Description = "Sadly, this utility needs to perform some minor changes in the system in order for it to work. " +
