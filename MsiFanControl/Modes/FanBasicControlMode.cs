@@ -7,35 +7,80 @@ using System.Threading.Tasks;
 
 namespace MsiFanControl.Modes
 {
-	class FanBasicControlMode
+	class BasicModeModel
 	{
-		public static void applyProfile(int newValue)
-		{
-			var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_System");
-			const string propName = "System";
+		private readonly ManagementObjectSearcher _searcher;
+		private readonly string _propName;
+		
+		public int Value { get; set; }
 
-			Util.WmiQueryForeach(searcher, (obj, index) => MsiWmiInstance.FromWmi(index, propName, obj), (obj, instance) =>
+		private static int toRaw(int newValue)
+		{
+			if (newValue > 0)
+			{
+				return newValue;
+			}
+			else
+			{
+				return 128 + Math.Abs(newValue);
+			}
+		}
+
+		private static int fromRaw(int value)
+		{
+			if (value >= 128)
+			{
+				return 128 - value;
+			}
+			else
+			{
+				return value;
+			}
+		}
+
+		private void RefreshFromDb()
+		{
+			bool init = false;
+
+			Util.WmiQueryForeach(_searcher, (obj, index) => MsiWmiInstance.FromWmi(index, _propName, obj), (obj, instance) =>
 			{
 				if (instance.Index == 10)
 				{
 					if (instance.IsValid())
 					{
-						int value = Convert.ToInt32(obj.GetPropertyValue(propName));
+						Value = fromRaw(Convert.ToInt32(obj.GetPropertyValue(_propName)));
+						init = true;
+					}
+					else
+					{
+						throw new InvalidWmiInstanceException();
+					}
+				}
+			});
 
-						value &= 240;
+			if (!init)
+			{
+				throw new InvalidWmiInstanceException();
+			}
+		}
 
-						if (newValue > 0)
-						{
-							value += newValue;
-							value &= 127;
-						}
-						else
-						{
-							value += Math.Abs(newValue);
-							value |= 128;
-						}
+		public BasicModeModel()
+		{
+			_searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM MSI_System");
+			_propName = "System";
 
-						obj.SetPropertyValue(propName, value);
+			RefreshFromDb();
+		}
+
+		public void Commit()
+		{
+			Util.WmiQueryForeach(_searcher, (obj, index) => MsiWmiInstance.FromWmi(index, _propName, obj), (obj, instance) =>
+			{
+				if (instance.Index == 10)
+				{
+					if (instance.IsValid())
+					{
+						obj.SetPropertyValue(_propName, toRaw(Value));
 						obj.Put();
 					}
 					else
@@ -44,6 +89,24 @@ namespace MsiFanControl.Modes
 					}
 				}
 			});
+
+			RefreshFromDb();
+		}
+
+		public override string ToString()
+		{
+			return "Current control value: " + Value.ToString();
+		}
+	}
+
+	class FanBasicControlMode
+	{
+
+		public static void applyProfile(int newValue)
+		{
+			var model = new BasicModeModel();
+			model.Value = newValue;
+			model.Commit();
 		}
 	}
 }

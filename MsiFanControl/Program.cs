@@ -41,6 +41,34 @@ namespace MsiFanControl
 			return false;
 		}
 
+		[Verb(Description = "Gets info about currently active control profile and its properties (if any)")]
+		public static void Status()
+		{
+			if (InstallationNeeded())
+			{
+				return;
+			}
+
+			var mode = Modes.ModeChanger.GetCurrentMode();
+
+			Console.WriteLine("Current control mode: " + mode.ToString());
+
+			if (mode == ControlMode.advanced)
+			{
+				var cpu = new Modes.AdvancedModeModel(FanType.cpu);
+				var gpu = new Modes.AdvancedModeModel(FanType.gpu);
+
+				Console.WriteLine(cpu.ToString());
+				Console.WriteLine(gpu.ToString());
+			}
+			else if (mode == ControlMode.basic)
+			{
+				var model = new Modes.BasicModeModel();
+
+				Console.WriteLine(model.ToString());
+			}
+		}
+
 		[Verb(Description = "Default behaviour of fans. In this profile they will work as if no custom control software were ever used")]
 		public static void Auto()
 		{
@@ -59,9 +87,8 @@ namespace MsiFanControl
 		public static void Basic(
 			[Aliases("")]
 			[Description("Control value for basic fan speed adjustment, allegedly affects both CPU and GPU fans")]
-			[Required]
 			[BasicModeValueValidation]
-			int value
+			int? value
 			)
 		{
 			if (InstallationNeeded())
@@ -69,11 +96,17 @@ namespace MsiFanControl
 				return;
 			}
 
+			if (value.HasValue)
+			{
+				Console.WriteLine("Setting basic profile control value");
+				Modes.FanBasicControlMode.applyProfile(value.Value);
+			}
+
 			Console.WriteLine("Changing mode to basic");
 			Modes.ModeChanger.ChangeMode(ControlMode.basic);
-			Console.WriteLine("Setting basic profile control value");
-			Modes.FanBasicControlMode.applyProfile(value);
+
 			Console.WriteLine("All done");
+			Status();
 		}
 
 		[Verb(Description = "Advanced control mode allows to adjust the curve which represents fan speed function of temperature. " +
@@ -82,13 +115,11 @@ namespace MsiFanControl
 		public static void Advanced(
 			[Aliases("")]
 			[Description("")]
-			[Required]
 			[AdvancedModeValuesValidation]
 			int[] cpu,
 
 			[Aliases("")]
 			[Description("")]
-			[Required]
 			[AdvancedModeValuesValidation]
 			int[] gpu
 			)
@@ -98,14 +129,23 @@ namespace MsiFanControl
 				return;
 			}
 
-			Console.WriteLine("Setting CPU fan values");
-			Modes.FanAdvancedControlMode.applyProfile(FanType.cpu, cpu);
-			Console.WriteLine("Setting GPU fan values");
-			Modes.FanAdvancedControlMode.applyProfile(FanType.gpu, gpu);
+			if (cpu != null)
+			{
+				Console.WriteLine("Setting CPU fan values");
+				Modes.FanAdvancedControlMode.applyProfile(FanType.cpu, cpu);
+			}
+
+			if (gpu != null)
+			{
+				Console.WriteLine("Setting GPU fan values");
+				Modes.FanAdvancedControlMode.applyProfile(FanType.gpu, gpu);
+			}
+
 			Console.WriteLine("Changing mode to advanced");
 			Modes.ModeChanger.ChangeMode(ControlMode.advanced);
 
 			Console.WriteLine("All done");
+			Status();
 		}
 
 		[Verb(Description = "Sadly, this utility needs to perform some minor changes in the system in order for it to work. " +

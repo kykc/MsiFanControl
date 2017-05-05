@@ -110,6 +110,13 @@ namespace MsiFanControl.Modes
 				}
 			}
 		}
+
+		public override string ToString()
+		{
+			string header = _fanType == FanType.cpu ? "CPU curve: " : "GPU curve: ";
+
+			return header + "[" + _instances.Select((x) => x.Value.ToString()).Aggregate((x, y) => x + "," + y) + "]";
+		}
 	}
 
 	class FanAdvancedControlMode
