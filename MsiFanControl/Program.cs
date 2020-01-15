@@ -78,7 +78,7 @@ namespace MsiFanControl
 			}
 		}
 
-		[Verb(Description = "Default behaviour of fans. In this profile they will work as if no custom control software were ever used")]
+		[Verb(Description = "Default behavior of fans. In this profile they will work as if no custom control software were ever used")]
 		public static void Auto(
 			[Aliases("")]
 			[Description("Quiet mode, not stdout output")]
